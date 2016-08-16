@@ -13,7 +13,7 @@ typedef NS_ENUM(NSUInteger, JitPushUpdateType)
     // Sementic Version
     JitPushMajorUpdate = 1,
     JitPushMinorUpdate,
-    JitPushFlyPatchUpdate,
+    JitPushPatchUpdate,
 };
 
 @class JitPush;

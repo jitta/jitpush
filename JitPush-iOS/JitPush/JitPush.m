@@ -8,7 +8,7 @@
 
 #import "JitPush.h"
 #import "RCTBridge.h"
-#import "CWStatusBarNotification.h"
+//#import "CWStatusBarNotification.h"
 
 NSString *const kBundlePayload = @"CurrentPayload";
 
@@ -25,7 +25,6 @@ NSString *const kBundlePayload = @"CurrentPayload";
 @property JitPushUpdateType updateType;
 @property NSDictionary *updatedPayloadData;
 @property BOOL isInitialize;
-@property CWStatusBarNotification *statusBarNotification;
 
 @end
 
@@ -33,20 +32,21 @@ NSString *const kBundlePayload = @"CurrentPayload";
 
 RCT_EXPORT_MODULE()
 
-static bool isFirstTime = YES;
-
 + (id)sharedManager
 {
     static JitPush *_sharedManager = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        isFirstTime = NO;
         _sharedManager = [[self alloc] init];
         [_sharedManager defaults];
     });
-
     
     return _sharedManager;
+}
+- (instancetype)init
+{
+    self = [super init];
+    return self;
 }
 
 - (void)defaults
@@ -54,7 +54,7 @@ static bool isFirstTime = YES;
     self.showProgress = YES;
     self.allowCellularDataUse = NO;
     self.updateType = JitPushMinorUpdate;
-    self.statusBarNotification = [CWStatusBarNotification new];
+    //    self.statusBarNotification = [CWStatusBarNotification new];
 }
 
 #pragma mark - JS methods // Export constants
@@ -90,7 +90,7 @@ static bool isFirstTime = YES;
         self.isInitialize = NO;
         return;
     }
-
+    
     NSError *error;
     NSDictionary *localPayload = [NSJSONSerialization JSONObjectWithData:defaultPayloadData
                                                                  options:NSJSONReadingAllowFragments
@@ -135,9 +135,15 @@ static bool isFirstTime = YES;
     
     if (latestJSCodeURLString && [[NSFileManager defaultManager] fileExistsAtPath:latestJSCodeURLString]) {
         self._latestBundleURL = [NSURL URLWithString:[NSString stringWithFormat:@"file://%@", latestJSCodeURLString]];
+        NSLog(@"last bundle %@", self._latestBundleURL);
     }
     
-    return self._latestBundleURL ? self._latestBundleURL : self.defaultBundleURL;
+    if (self._latestBundleURL) {
+        return self._latestBundleURL;
+    } else {
+        return self.defaultBundleURL;
+    }
+    
 }
 
 - (void)checkUpdate
@@ -195,21 +201,29 @@ static bool isFirstTime = YES;
 
 - (NSString *)JSCodeDirectory
 {
-    NSString *filePathDir = [[self libraryDirectory] stringByAppendingString:@"JSCode"];
+    NSString* libraryDirectory = [self libraryDirectory];
+    NSString *filePathAndDirectory = [libraryDirectory stringByAppendingPathComponent:@"JSCode"];
     NSError *error;
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    BOOL isDir;
     
-    if ([fileManager fileExistsAtPath:filePathDir isDirectory:&isDir]) {
-        return filePathDir;
+    NSFileManager* fileManager = [NSFileManager defaultManager];
+    
+    BOOL isDir;
+    if ([fileManager fileExistsAtPath:filePathAndDirectory isDirectory:&isDir]) {
+        if (isDir) {
+            NSLog(@"file path and directory: %@", filePathAndDirectory);
+            return filePathAndDirectory;
+        }
     }
     
-    if (![fileManager createDirectoryAtPath:filePathDir withIntermediateDirectories:YES attributes:nil error:&error]) {
-        NSLog(@"Create Directory error: %@", error);
+    if (![fileManager createDirectoryAtPath:filePathAndDirectory
+                withIntermediateDirectories:YES
+                                 attributes:nil
+                                      error:&error])
+    {
+        NSLog(@"Create directory error: %@", error);
         return nil;
     }
-    
-    return filePathDir;
+    return filePathAndDirectory;
 }
 
 #pragma mark - check update
@@ -222,14 +236,18 @@ static bool isFirstTime = YES;
     
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.showProgress) {
-            [self.statusBarNotification displayNotificationWithMessage:@"Checking for update." forDuration:0.25];
+            //            CWStatusBarNotification *statusBarNotification = [CWStatusBarNotification new];
+            //            [statusBarNotification displayNotificationWithMessage:@"Checking for update." forDuration:0.5];
+            NSLog(@"Checking update");
         }
     });
     
-    NSData* data = [NSData dataWithContentsOfURL:self.payloadURL];
+    NSData *data = [NSData dataWithContentsOfURL:self.payloadURL];
     if (!data) {
         if (self.showProgress) {
-            [self.statusBarNotification displayNotificationWithMessage:@"Received no Update payload data." forDuration:0.25];
+            //            CWStatusBarNotification *statusBarNotification = [CWStatusBarNotification new];
+            //            [statusBarNotification displayNotificationWithMessage:@"Received no Update payload data." forDuration:1];
+            NSLog(@"no update payload data");
         }
         return;
     }
@@ -238,7 +256,9 @@ static bool isFirstTime = YES;
     self.updatedPayloadData = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:&error];
     if (error) {
         if (self.showProgress) {
-            [self.statusBarNotification displayNotificationWithMessage:@"Error reading json payload!" forDuration:0.25];
+            //            CWStatusBarNotification *statusBarNotification = [CWStatusBarNotification new];
+            //            [statusBarNotification displayNotificationWithMessage:@"Error reading json payload!" forDuration:1];
+            NSLog(@"Error json payload");
         }
         return;
     }
@@ -251,7 +271,9 @@ static bool isFirstTime = YES;
     
     if ([self shouldDownloadUpdateWithVersion:versionToDownload forMinContainerVersion:minContainerVersion]) {
         if (self.showProgress) {
-            [self.statusBarNotification displayNotificationWithMessage:@"Downloading update..." forDuration:0.5];
+            //            CWStatusBarNotification *statusBarNotification = [CWStatusBarNotification new];
+            //            [statusBarNotification displayNotificationWithMessage:@"You have a new update!" forDuration:1];
+            NSLog(@"You have a new update.");
         }
         if (isRelative) {
             urlToDownload = [self.hostName stringByAppendingString:urlToDownload];
@@ -261,8 +283,14 @@ static bool isFirstTime = YES;
     else {
         if (self.showProgress) {
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [self.statusBarNotification displayNotificationWithMessage:@"Already up to date." forDuration:0.25];
+                //                CWStatusBarNotification *statusBarNotification = [CWStatusBarNotification new];
+                //                [statusBarNotification setNotificationLabelBackgroundColor:[UIColor greenColor]];
+                //                [statusBarNotification displayNotificationWithMessage:@"Already up to date." forDuration:0.5];
+                NSLog(@"Already up to date");
             });
+            
+            //TODO: test call delegate
+            // [self.delegate JitPushDidUpdateBundleWithURL:nil];
         }
     }
 }
@@ -330,7 +358,7 @@ static bool isFirstTime = YES;
                 
                 break;
             }
-            case JitPushFlyPatchUpdate: {
+            case JitPushPatchUpdate: {
                 if (currentMajor < updateMajor || (currentMajor == updateMajor && currentMinor < updateMinor)
                     || (currentMajor == updateMajor && currentMinor == updateMinor && currentPatch < updatePatch)) {
                     shouldDownload = YES;
@@ -367,22 +395,30 @@ static bool isFirstTime = YES;
         if (self.showProgress) {
             NSString *progress = [NSString stringWithFormat:@"Downloading Update - %@", [NSByteCountFormatter stringFromByteCount:totalBytesWritten
                                                                                                                        countStyle:NSByteCountFormatterCountStyleFile]];
-            [self.statusBarNotification displayNotificationWithMessage:progress completion:nil];
+            //            CWStatusBarNotification *statusBarNotification = [CWStatusBarNotification new];
+            //            [statusBarNotification setNotificationLabelBackgroundColor: [UIColor colorWithRed:102.0/255.0 green:178.0/255.0 blue:255.0/255.0 alpha:1.0]];
+            //            [statusBarNotification displayNotificationWithMessage:progress completion:nil];
+            
+            NSLog(@"%@", progress);
         }
     }
     else {
         if (self.showProgress) {
             NSString *progress = [NSString stringWithFormat:@"Downloading Update - %d%%", (int)(totalBytesWritten/totalBytesExpectedToWrite) * 100];
-            [self.statusBarNotification displayNotificationWithMessage:progress completion:nil];
+            //            CWStatusBarNotification *statusBarNotification = [CWStatusBarNotification new];
+            //            [statusBarNotification displayNotificationWithMessage:progress completion:nil];
+            NSLog(@"%@", progress);
         }
     }
-
+    
 }
 
 - (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didFinishDownloadingToURL:(NSURL *)location
 {
     if (self.showProgress) {
-        [self.statusBarNotification displayNotificationWithMessage:@"Download Complete." forDuration:0.5];
+        //        CWStatusBarNotification *statusBarNotification = [CWStatusBarNotification new];
+        //        [statusBarNotification displayNotificationWithMessage:@"Download Complete." forDuration:1];
+        NSLog(@"Download complete");
     }
     
     NSError *error;
@@ -392,14 +428,16 @@ static bool isFirstTime = YES;
     if ([data writeToFile:filename atomically:YES]) {
         [[NSUserDefaults standardUserDefaults] setObject:self.updatedPayloadData forKey:kBundlePayload];
         if ([self.delegate respondsToSelector:@selector(JitPushDidUpdateBundleWithURL:)]) {
-            [self.delegate JitPushDidUpdateBundleWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"file://%@", filename]]];
+            NSURL *updatedBundleURL = [NSURL URLWithString:[NSString stringWithFormat:@"file://%@", filename]];
+            [self.delegate JitPushDidUpdateBundleWithURL:updatedBundleURL];
         }
     }
     else {
-        [self.statusBarNotification displayNotificationWithMessage:@"Update Failed." forDuration:0.5];
+        //        CWStatusBarNotification *statusBarNotification = [CWStatusBarNotification new];
+        //        [statusBarNotification displayNotificationWithMessage:@"Update Failed." forDuration:1];
         NSLog(@"Update failed - %@.", error.localizedDescription);
     }
-
+    
 }
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
@@ -408,6 +446,5 @@ static bool isFirstTime = YES;
         NSLog(@"%@", error.localizedDescription);
     }
 }
-
 
 @end
