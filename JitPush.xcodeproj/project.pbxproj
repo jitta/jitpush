@@ -7,9 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		773FCA111D59DD07007BBED3 /* JitPush.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 773FCA101D59DD07007BBED3 /* JitPush.h */; };
-		773FCA131D59DD07007BBED3 /* JitPush.m in Sources */ = {isa = PBXBuildFile; fileRef = 773FCA121D59DD07007BBED3 /* JitPush.m */; };
-		77DF1C561D62DF9B00E8B909 /* CWStatusBarNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = 77DF1C551D62DF9B00E8B909 /* CWStatusBarNotification.m */; };
+		77DF1C5B1D62F06200E8B909 /* CWStatusBarNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = 77DF1C581D62F06200E8B909 /* CWStatusBarNotification.m */; };
+		77DF1C5C1D62F06200E8B909 /* JitPush.m in Sources */ = {isa = PBXBuildFile; fileRef = 77DF1C591D62F06200E8B909 /* JitPush.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -19,7 +18,6 @@
 			dstPath = "include/$(PRODUCT_NAME)";
 			dstSubfolderSpec = 16;
 			files = (
-				773FCA111D59DD07007BBED3 /* JitPush.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -27,10 +25,10 @@
 
 /* Begin PBXFileReference section */
 		773FCA0D1D59DD07007BBED3 /* libJitPush.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libJitPush.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		773FCA101D59DD07007BBED3 /* JitPush.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JitPush.h; sourceTree = "<group>"; };
-		773FCA121D59DD07007BBED3 /* JitPush.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = JitPush.m; sourceTree = "<group>"; };
-		77DF1C541D62DF9B00E8B909 /* CWStatusBarNotification.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CWStatusBarNotification.h; sourceTree = "<group>"; };
-		77DF1C551D62DF9B00E8B909 /* CWStatusBarNotification.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CWStatusBarNotification.m; sourceTree = "<group>"; };
+		77DF1C571D62F06200E8B909 /* CWStatusBarNotification.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CWStatusBarNotification.h; path = JitPush/CWStatusBarNotification.h; sourceTree = SOURCE_ROOT; };
+		77DF1C581D62F06200E8B909 /* CWStatusBarNotification.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CWStatusBarNotification.m; path = JitPush/CWStatusBarNotification.m; sourceTree = SOURCE_ROOT; };
+		77DF1C591D62F06200E8B909 /* JitPush.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = JitPush.m; path = JitPush/JitPush.m; sourceTree = SOURCE_ROOT; };
+		77DF1C5A1D62F06200E8B909 /* JitPush.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = JitPush.h; path = JitPush/JitPush.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,10 +61,10 @@
 		773FCA0F1D59DD07007BBED3 /* JitPush */ = {
 			isa = PBXGroup;
 			children = (
-				773FCA101D59DD07007BBED3 /* JitPush.h */,
-				773FCA121D59DD07007BBED3 /* JitPush.m */,
-				77DF1C541D62DF9B00E8B909 /* CWStatusBarNotification.h */,
-				77DF1C551D62DF9B00E8B909 /* CWStatusBarNotification.m */,
+				77DF1C571D62F06200E8B909 /* CWStatusBarNotification.h */,
+				77DF1C581D62F06200E8B909 /* CWStatusBarNotification.m */,
+				77DF1C591D62F06200E8B909 /* JitPush.m */,
+				77DF1C5A1D62F06200E8B909 /* JitPush.h */,
 			);
 			name = JitPush;
 			path = JittaOnFly;
@@ -128,8 +126,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				77DF1C561D62DF9B00E8B909 /* CWStatusBarNotification.m in Sources */,
-				773FCA131D59DD07007BBED3 /* JitPush.m in Sources */,
+				77DF1C5B1D62F06200E8B909 /* CWStatusBarNotification.m in Sources */,
+				77DF1C5C1D62F06200E8B909 /* JitPush.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

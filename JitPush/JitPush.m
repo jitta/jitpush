@@ -57,7 +57,7 @@ static bool isFirstTime = YES;
     self.statusBarNotification = [CWStatusBarNotification new];
 }
 
-#pragma mark - JS methods
+#pragma mark - JS methods // Export constants
 
 - (NSDictionary *)constantsToExport {
     NSDictionary *payload = [[NSUserDefaults standardUserDefaults] objectForKey:kBundlePayload];
