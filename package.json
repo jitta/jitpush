@@ -11,6 +11,9 @@
     "JitPush-iOS/JitPush/CWStatusBarNotification.h",
     "JitPush-iOS/JitPush/CWStatusBarNotification.m"
   ],
+  "peerDependencies": {
+    "react-native": ">=0.20.0"
+  },
   "repository": {
     "type": "git",
     "url": "git@github.com/Thunderbird7/JitPush.git"
