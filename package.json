@@ -1,6 +1,6 @@
 {
   "name": "jitpush",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Push your code updated on fly without AppStore Review Proceed. // React native modules",
   "main": "JitPush.js",
   "files": [
@@ -21,6 +21,7 @@
   "author": "Yuttana Kungwon",
   "keywords": [
     "react-native",
-    "updates"
+    "jitta",
+    "update app"
   ]
 }
