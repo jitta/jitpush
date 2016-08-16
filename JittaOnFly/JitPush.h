@@ -43,7 +43,8 @@ typedef NS_ENUM(NSUInteger, JitPushUpdateType)
 - (NSURL *)lastestBundleURL;
 
 - (void)checkUpdate;
-- (BOOL)allowCellularDataUse:(BOOL)cellular;
+- (void)showProgress:(BOOL)progress;
+- (void)allowCellularDataUse:(BOOL)cellular;
 - (void)downloadUpdateWithType:(JitPushUpdateType)type;
 - (void)setHostName:(NSString *)hostName;
 

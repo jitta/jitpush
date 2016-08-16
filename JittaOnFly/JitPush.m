@@ -1,6 +1,6 @@
 //
-//  JittaOnFly.m
-//  JittaOnFly
+//  JitPush.m
+//  JitPush
 //
 //  Created by Yuttana Kungwon on 8/9/2559 BE.
 //  Copyright © 2559 Jitta.com. All rights reserved.
@@ -8,8 +8,9 @@
 
 #import "JitPush.h"
 #import "RCTBridge.h"
+#import "CWStatusBarNotification.h"
 
-NSString *const kBundlePayload = @"CurrentJSBundle";
+NSString *const kBundlePayload = @"CurrentPayload";
 
 
 @interface JitPush() <NSURLSessionDownloadDelegate, RCTBridgeModule>
@@ -24,6 +25,7 @@ NSString *const kBundlePayload = @"CurrentJSBundle";
 @property JitPushUpdateType updateType;
 @property NSDictionary *updatedPayloadData;
 @property BOOL isInitialize;
+@property CWStatusBarNotification *statusBarNotification;
 
 @end
 
@@ -52,6 +54,7 @@ static bool isFirstTime = YES;
     self.showProgress = YES;
     self.allowCellularDataUse = NO;
     self.updateType = JitPushMinorUpdate;
+    self.statusBarNotification = [CWStatusBarNotification new];
 }
 
 #pragma mark - JS methods
@@ -75,10 +78,10 @@ static bool isFirstTime = YES;
     
     // compare payload data
     NSData *defaultPayloadData = [NSData dataWithContentsOfURL:self.defaultPayloadURL];
-    [self compareStoredPayloadData:defaultPayloadData];
+    [self compareStoredPayloadDataWithDefaultPayloadData:defaultPayloadData];
 }
 
-- (void)compareStoredPayloadData:(NSData *)defaultPayloadData
+- (void)compareStoredPayloadDataWithDefaultPayloadData:(NSData *)defaultPayloadData
 {
     NSUserDefaults *defaults = [[NSUserDefaults alloc] init];
     
@@ -109,8 +112,302 @@ static bool isFirstTime = YES;
         
         // compare if stored version < local payload version
         if ([storedPayloadVersion compare:localPayloadVersion options:NSNumericSearch] == NSOrderedAscending) {
-            //
+            NSData *defaultJSBundleData = [NSData dataWithContentsOfURL:self.defaultBundleURL];
+            NSString *fileName = [NSString stringWithFormat:@"%@/%@", [self JSCodeDirectory], @"main.jsbundle"];
+            
+            if ([defaultJSBundleData writeToFile:fileName atomically:YES]) {
+                [defaults setObject:localPayloadVersion forKey:kBundlePayload];
+            }
+        }
+    }
+    
+    self.isInitialize = YES;
+}
+
+- (void)showProgress:(BOOL)progress
+{
+    self.showProgress = progress;
+}
+
+- (NSURL *)lastestBundleURL
+{
+    NSString *latestJSCodeURLString = [[[self libraryDirectory] stringByAppendingPathComponent:@"JSCode"] stringByAppendingPathComponent:@"main.jsbundle"];
+    
+    if (latestJSCodeURLString && [[NSFileManager defaultManager] fileExistsAtPath:latestJSCodeURLString]) {
+        self._latestBundleURL = [NSURL URLWithString:[NSString stringWithFormat:@"file://%@", latestJSCodeURLString]];
+    }
+    
+    return self._latestBundleURL ? self._latestBundleURL : self.defaultBundleURL;
+}
+
+- (void)checkUpdate
+{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (self.payloadURL) {
+            [self performUpdateCheck];
+        }
+        else {
+            NSLog(@"Please make sure you have set the Update payload URL");
+        }
+    });
+}
+
+- (void)allowCellularDataUse:(BOOL)cellular
+{
+    self.allowCellularDataUse = cellular;
+}
+
+- (void)downloadUpdateWithType:(JitPushUpdateType)type
+{
+    self.updateType = type;
+}
+
+#pragma mark - private
+
+- (void)startDownloadingUpdateFromURL:(NSString *)urlString
+{
+    NSURL *url = [NSURL URLWithString:urlString];
+    
+    NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+    sessionConfig.allowsCellularAccess = self.allowCellularDataUse;
+    sessionConfig.timeoutIntervalForRequest = 60.0;
+    sessionConfig.timeoutIntervalForResource = 60.0;
+    sessionConfig.HTTPMaximumConnectionsPerHost = 1;
+    
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfig
+                                                          delegate:self
+                                                     delegateQueue:nil];
+    
+    NSURLSessionDownloadTask* task = [session downloadTaskWithURL:url];
+    [task resume];
+}
+
+- (NSString*)containerVersion {
+    return [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+}
+
+- (NSString*)libraryDirectory
+{
+    // Application sandbox library directory.
+    // eg. /data/Containers/Data/Application/AEB82194-E958-4BD3-8C90-3F3B70157D75/Library
+    return [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) firstObject];
+}
+
+- (NSString *)JSCodeDirectory
+{
+    NSString *filePathDir = [[self libraryDirectory] stringByAppendingString:@"JSCode"];
+    NSError *error;
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    BOOL isDir;
+    
+    if ([fileManager fileExistsAtPath:filePathDir isDirectory:&isDir]) {
+        return filePathDir;
+    }
+    
+    if (![fileManager createDirectoryAtPath:filePathDir withIntermediateDirectories:YES attributes:nil error:&error]) {
+        NSLog(@"Create Directory error: %@", error);
+        return nil;
+    }
+    
+    return filePathDir;
+}
+
+#pragma mark - check update
+
+- (void)performUpdateCheck
+{
+    if (!self.isInitialize) {
+        return;
+    }
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self.showProgress) {
+            [self.statusBarNotification displayNotificationWithMessage:@"Checking for update." forDuration:0.25];
+        }
+    });
+    
+    NSData* data = [NSData dataWithContentsOfURL:self.payloadURL];
+    if (!data) {
+        if (self.showProgress) {
+            [self.statusBarNotification displayNotificationWithMessage:@"Received no Update payload data." forDuration:0.25];
+        }
+        return;
+    }
+    
+    NSError* error;
+    self.updatedPayloadData = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:&error];
+    if (error) {
+        if (self.showProgress) {
+            [self.statusBarNotification displayNotificationWithMessage:@"Error reading json payload!" forDuration:0.25];
+        }
+        return;
+    }
+    
+    // json parser
+    NSString *versionToDownload = [self.updatedPayloadData objectForKey:@"version"];
+    NSString *urlToDownload = [[self.updatedPayloadData objectForKey:@"url"] objectForKey:@"url"];
+    NSString *minContainerVersion = [self.updatedPayloadData objectForKey:@"minContainerVersion"];
+    BOOL isRelative = [[[self.updatedPayloadData objectForKey:@"url"] objectForKey:@"isRelative"] boolValue];
+    
+    if ([self shouldDownloadUpdateWithVersion:versionToDownload forMinContainerVersion:minContainerVersion]) {
+        if (self.showProgress) {
+            [self.statusBarNotification displayNotificationWithMessage:@"Downloading update..." forDuration:0.5];
+        }
+        if (isRelative) {
+            urlToDownload = [self.hostName stringByAppendingString:urlToDownload];
+        }
+        [self startDownloadingUpdateFromURL:urlToDownload];
+    }
+    else {
+        if (self.showProgress) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self.statusBarNotification displayNotificationWithMessage:@"Already up to date." forDuration:0.25];
+            });
         }
     }
 }
+
+- (BOOL)shouldDownloadUpdateWithVersion:(NSString*)version forMinContainerVersion:(NSString*)minContainerVersion
+{
+    BOOL shouldDownload = NO;
+    
+    /*
+     * First check for the version match. If we have the update version, then don't download.
+     * Also, check what kind of updates the user wants.
+     */
+    NSDictionary *currentPayload = [[NSUserDefaults standardUserDefaults] objectForKey:kBundlePayload];
+    if (!currentPayload) {
+        shouldDownload = YES;
+    }
+    else {
+        NSString *currentVersion = [currentPayload objectForKey:@"version"];
+        
+        int currentMajor, currentMinor, currentPatch, updateMajor, updateMinor, updatePatch;
+        
+        NSArray *currentComponents = [currentVersion componentsSeparatedByString:@"."];
+        if (currentComponents.count == 0) {
+            return NO;
+        }
+        currentMajor = [currentComponents[0] intValue];
+        if (currentComponents.count >= 2) {
+            currentMinor = [currentComponents[1] intValue];
+        }
+        else {
+            currentMinor = 0;
+        }
+        if (currentComponents.count >= 3) {
+            currentPatch = [currentComponents[2] intValue];
+        }
+        else {
+            currentPatch = 0;
+        }
+        NSArray *updateComponents = [version componentsSeparatedByString:@"."];
+        updateMajor = [updateComponents[0] intValue];
+        if (updateComponents.count >= 2) {
+            updateMinor = [updateComponents[1] intValue];
+        }
+        else {
+            updateMinor = 0;
+        }
+        if (updateComponents.count >= 3) {
+            updatePatch = [updateComponents[2] intValue];
+        }
+        else {
+            updatePatch = 0;
+        }
+        
+        switch (self.updateType) {
+            case JitPushMajorUpdate: {
+                if (currentMajor < updateMajor) {
+                    shouldDownload = YES;
+                }
+                break;
+            }
+            case JitPushMinorUpdate: {
+                if (currentMajor < updateMajor || (currentMajor == updateMajor && currentMinor < updateMinor)) {
+                    shouldDownload = YES;
+                }
+                
+                break;
+            }
+            case JitPushFlyPatchUpdate: {
+                if (currentMajor < updateMajor || (currentMajor == updateMajor && currentMinor < updateMinor)
+                    || (currentMajor == updateMajor && currentMinor == updateMinor && currentPatch < updatePatch)) {
+                    shouldDownload = YES;
+                }
+                break;
+            }
+            default: {
+                shouldDownload = YES;
+                break;
+            }
+        }
+    }
+    
+    /*
+     * Then check if the update is good for our container version.
+     */
+    NSString* containerVersion = [self containerVersion];
+    if (shouldDownload && [containerVersion compare:minContainerVersion options:NSNumericSearch] != NSOrderedAscending) {
+        shouldDownload = YES;
+    }
+    else {
+        shouldDownload = NO;
+    }
+    
+    return shouldDownload;
+}
+
+
+#pragma mark - NSURLSessionDownloadDelegate
+
+- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didWriteData:(int64_t)bytesWritten totalBytesWritten:(int64_t)totalBytesWritten totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite
+{
+    if (totalBytesExpectedToWrite == NSURLSessionTransferSizeUnknown) {
+        if (self.showProgress) {
+            NSString *progress = [NSString stringWithFormat:@"Downloading Update - %@", [NSByteCountFormatter stringFromByteCount:totalBytesWritten
+                                                                                                                       countStyle:NSByteCountFormatterCountStyleFile]];
+            [self.statusBarNotification displayNotificationWithMessage:progress completion:nil];
+        }
+    }
+    else {
+        if (self.showProgress) {
+            NSString *progress = [NSString stringWithFormat:@"Downloading Update - %d%%", (int)(totalBytesWritten/totalBytesExpectedToWrite) * 100];
+            [self.statusBarNotification displayNotificationWithMessage:progress completion:nil];
+        }
+    }
+
+}
+
+- (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didFinishDownloadingToURL:(NSURL *)location
+{
+    if (self.showProgress) {
+        [self.statusBarNotification displayNotificationWithMessage:@"Download Complete." forDuration:0.5];
+    }
+    
+    NSError *error;
+    NSData *data = [NSData dataWithContentsOfURL:location];
+    NSString *filename = [NSString stringWithFormat:@"%@/%@", [self JSCodeDirectory], @"main.jsbundle"];
+    
+    if ([data writeToFile:filename atomically:YES]) {
+        [[NSUserDefaults standardUserDefaults] setObject:self.updatedPayloadData forKey:kBundlePayload];
+        if ([self.delegate respondsToSelector:@selector(JitPushDidUpdateBundleWithURL:)]) {
+            [self.delegate JitPushDidUpdateBundleWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"file://%@", filename]]];
+        }
+    }
+    else {
+        [self.statusBarNotification displayNotificationWithMessage:@"Update Failed." forDuration:0.5];
+        NSLog(@"Update failed - %@.", error.localizedDescription);
+    }
+
+}
+
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error
+{
+    if (error) {
+        NSLog(@"%@", error.localizedDescription);
+    }
+}
+
+
 @end

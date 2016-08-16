@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		773FCA111D59DD07007BBED3 /* JitPush.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 773FCA101D59DD07007BBED3 /* JitPush.h */; };
 		773FCA131D59DD07007BBED3 /* JitPush.m in Sources */ = {isa = PBXBuildFile; fileRef = 773FCA121D59DD07007BBED3 /* JitPush.m */; };
+		77DF1C561D62DF9B00E8B909 /* CWStatusBarNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = 77DF1C551D62DF9B00E8B909 /* CWStatusBarNotification.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -28,6 +29,8 @@
 		773FCA0D1D59DD07007BBED3 /* libJitPush.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libJitPush.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		773FCA101D59DD07007BBED3 /* JitPush.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JitPush.h; sourceTree = "<group>"; };
 		773FCA121D59DD07007BBED3 /* JitPush.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = JitPush.m; sourceTree = "<group>"; };
+		77DF1C541D62DF9B00E8B909 /* CWStatusBarNotification.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CWStatusBarNotification.h; sourceTree = "<group>"; };
+		77DF1C551D62DF9B00E8B909 /* CWStatusBarNotification.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CWStatusBarNotification.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,6 +65,8 @@
 			children = (
 				773FCA101D59DD07007BBED3 /* JitPush.h */,
 				773FCA121D59DD07007BBED3 /* JitPush.m */,
+				77DF1C541D62DF9B00E8B909 /* CWStatusBarNotification.h */,
+				77DF1C551D62DF9B00E8B909 /* CWStatusBarNotification.m */,
 			);
 			name = JitPush;
 			path = JittaOnFly;
@@ -123,6 +128,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				77DF1C561D62DF9B00E8B909 /* CWStatusBarNotification.m in Sources */,
 				773FCA131D59DD07007BBED3 /* JitPush.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -215,7 +221,7 @@
 		773FCA171D59DD07007BBED3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				HEADER_SEARCH_PATHS = "$(SRCROOT)/../react-native/React/**";
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../react-native/React/**";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = JitPush;
 				SKIP_INSTALL = YES;
@@ -225,7 +231,7 @@
 		773FCA181D59DD07007BBED3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				HEADER_SEARCH_PATHS = "$(SRCROOT)/../react-native/React/**";
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../react-native/React/**";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = JitPush;
 				SKIP_INSTALL = YES;
