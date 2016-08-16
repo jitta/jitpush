@@ -16,14 +16,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com/Thunderbird7/JitPush.git"
+    "url": "git@github.com/jitta/jitpush.git"
   },
   "author": "Yuttana Kungwon",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/Thunderbird7/JitPush/issues"
-  },
-  "homepage": "https://github.com/Thunderbird7/JitPush#readme",
   "keywords": [
     "react-native",
     "updates"
