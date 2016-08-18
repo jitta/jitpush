@@ -77,8 +77,14 @@ RCT_EXPORT_MODULE()
     self.defaultPayloadURL = payloadURL;
     
     // compare payload data
-    NSData *defaultPayloadData = [NSData dataWithContentsOfURL:self.defaultPayloadURL];
-    [self compareStoredPayloadDataWithDefaultPayloadData:defaultPayloadData];
+    if (!self.defaultPayloadURL) {
+        id extpayload = @{@"version": @"1.0.0", @"minContainerVersion": @"1.0", @"url": @{@"url": @"NA", @"isRelative": @true}};
+        NSLog(@"Missing default json payload file. \n You should creating a payload file first. And then adding file on your project. \n Sample: %@ ", extpayload);
+        return;
+    } else {
+        NSData *defaultPayloadData = [NSData dataWithContentsOfURL:self.defaultPayloadURL];
+        [self compareStoredPayloadDataWithDefaultPayloadData:defaultPayloadData];
+    }
 }
 
 - (void)compareStoredPayloadDataWithDefaultPayloadData:(NSData *)defaultPayloadData
