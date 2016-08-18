@@ -1,4 +1,5 @@
 # jitpush
+![...](https://www.dropbox.com/s/ykfwzr74jwhdzx7/jitpush.gif?raw=1)
 ##### Getting Started
 1. Initial React-Native project
 2. Adding this script in package.json `"build:ios": "node node_modules/react-native/local-cli/cli.js bundle --entry-file='index.ios.js' --bundle-output='./ios/_YOUR_DIRECTORY_/main.jsbundle' --dev=false --platform='ios' --assets-dest='./ios'"` for pack a new jsbundle file.
